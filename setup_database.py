@@ -4,7 +4,6 @@ def create_database():
     conn = sqlite3.connect('metadata.db')
     c = conn.cursor()
 
-    # PROJECTS table
     c.execute('''
         CREATE TABLE IF NOT EXISTS projects (
             id                        INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -26,18 +25,17 @@ def create_database():
         )
     ''')
 
-    # FILES table
     c.execute('''
         CREATE TABLE IF NOT EXISTS files (
             id          INTEGER PRIMARY KEY AUTOINCREMENT,
             project_id  INTEGER NOT NULL,
             file_name   TEXT NOT NULL,
             file_type   TEXT NOT NULL,
+            status      TEXT NOT NULL DEFAULT 'SUCCEEDED',
             FOREIGN KEY (project_id) REFERENCES projects(id)
         )
     ''')
 
-    # KEYWORDS table
     c.execute('''
         CREATE TABLE IF NOT EXISTS keywords (
             id          INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -47,7 +45,6 @@ def create_database():
         )
     ''')
 
-    # PERSON_ROLE table
     c.execute('''
         CREATE TABLE IF NOT EXISTS person_role (
             id          INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -58,7 +55,6 @@ def create_database():
         )
     ''')
 
-    # LICENSES table
     c.execute('''
         CREATE TABLE IF NOT EXISTS licenses (
             id          INTEGER PRIMARY KEY AUTOINCREMENT,

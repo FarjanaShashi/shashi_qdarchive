@@ -12,8 +12,9 @@ REPOSITORY_ID = 2
 REPOSITORY_URL = "https://datadryad.org"
 
 # Dryad API credentials
-CLIENT_ID = "i0Px0JTG4rLiuZ0Nx5YPybcIxxD9rNnRODbG3-AYT-k"
-CLIENT_SECRET = "PPRQ_I6VM_rJZ__wR4y0jDwzw1L4CsaJseyBpaTepak"
+from config import DRYAD_CLIENT_ID, DRYAD_CLIENT_SECRET
+CLIENT_ID = DRYAD_CLIENT_ID
+CLIENT_SECRET = DRYAD_CLIENT_SECRET
 
 _token = None
 
@@ -107,12 +108,12 @@ def insert_project(query_string, project_url, title, description, language,
     return project_id
 
 
-def insert_file(project_id, file_name):
+def insert_file(project_id, file_name, status='SUCCEEDED'):
     ext = os.path.splitext(file_name)[1].lstrip('.').lower() or 'unknown'
     conn = sqlite3.connect('metadata.db')
     c = conn.cursor()
-    c.execute('INSERT INTO files (project_id, file_name, file_type) VALUES (?, ?, ?)',
-              (project_id, file_name, ext))
+    c.execute('INSERT INTO files (project_id, file_name, file_type, status) VALUES (?, ?, ?, ?)',
+              (project_id, file_name, ext, status))
     conn.commit()
     conn.close()
 
@@ -287,10 +288,16 @@ def process_datasets(datasets, query):
         if files:
             for file in files:
                 filename = file.get('path') or file.get('filename') or file.get('name') or 'unknown'
-                # Skip files over 100MB
-                file_size = file.get('size', 0)
-                if file_size > 100 * 1024 * 1024:
-                    print(f"    Skipping (too large {file_size // 1024 // 1024}MB): {filename}")
+                # Skip audio and video files
+                SKIP_EXTENSIONS = [
+                    '.mp4', '.mov', '.avi', '.mkv', '.wmv', '.flv',
+                    '.mp3', '.wav', '.aac', '.flac', '.ogg', '.wma',
+                    '.m4v', '.m4a', '.webm'
+                ]
+                file_ext = os.path.splitext(filename)[1].lower()
+                if file_ext in SKIP_EXTENSIONS:
+                    print(f"    Skipping (audio/video): {filename}")
+                    insert_file(project_id, filename, 'FAILED_TOO_LARGE')
                     continue
                 # Get download URL from file's _links
                 file_links = file.get('_links', {})
@@ -303,11 +310,15 @@ def process_datasets(datasets, query):
                 print(f"    Downloading: {filename}")
                 try:
                     download_file(file_url, filepath)
-                    insert_file(project_id, filename)
+                    insert_file(project_id, filename, 'SUCCEEDED')
                     downloaded_files += 1
                 except Exception as e:
                     print(f"    Error: {e}")
-                time.sleep(15)  # wait 5 seconds between each file
+                    if '429' in str(e):
+                        insert_file(project_id, filename, 'FAILED_SERVER_UNRESPONSIVE')
+                    else:
+                        insert_file(project_id, filename, 'FAILED_SERVER_UNRESPONSIVE')
+                time.sleep(30)
         else:
             print(f"    No files found for this dataset, skipping download.")
 
