@@ -299,6 +299,13 @@ def process_datasets(datasets, query):
                     print(f"    Skipping (audio/video): {filename}")
                     insert_file(project_id, filename, 'FAILED_TOO_LARGE')
                     continue
+                # Skip files over 200MB
+                file_size = file.get('size', 0) or 0
+                MAX_SIZE = 200 * 1024 * 1024  # 200MB
+                if file_size > MAX_SIZE:
+                    print(f"    Skipping (too large {file_size/1024/1024:.1f}MB): {filename}")
+                    insert_file(project_id, filename, 'FAILED_TOO_LARGE')
+                    continue
                 # Get download URL from file's _links
                 file_links = file.get('_links', {})
                 download_href = file_links.get('stash:download', {}).get('href', '')
@@ -318,11 +325,11 @@ def process_datasets(datasets, query):
                         insert_file(project_id, filename, 'FAILED_SERVER_UNRESPONSIVE')
                     else:
                         insert_file(project_id, filename, 'FAILED_SERVER_UNRESPONSIVE')
-                time.sleep(30)
+                time.sleep(60)
         else:
             print(f"    No files found for this dataset, skipping download.")
 
-        time.sleep(10)
+        time.sleep(30)
 
     return downloaded_files
 
@@ -354,7 +361,7 @@ def main():
             total_downloaded += count
             print(f"Downloaded {count} files for '{query}'")
 
-        time.sleep(30)
+        time.sleep(60)
 
     print(f"\n{'='*50}")
     print(f"DONE! Total files downloaded from Dryad: {total_downloaded}")
