@@ -5,7 +5,7 @@
 **GitHub:** FarjanaShashi  
 **University:** FAU Erlangen-Nürnberg  
 **Supervisor:** Prof. Dr. Dirk Riehle  
-**Course:** Seminar Project (15 ECTS)  
+**Course:** Artificial Intelligence Project (10 ECTS)  
 **Deadline:** April 17, 2026  
 
 ---
