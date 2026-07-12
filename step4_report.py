@@ -365,17 +365,65 @@ def make_pdf(conn):
                             topMargin=2*cm, bottomMargin=2*cm)
     story = []
 
-    # Cover
-    story.append(Spacer(1, 3*cm))
-    story.append(Paragraph("QDArchive – Part 2 Classification Report", title_style))
-    story.append(Paragraph("Student ID: 23148157 | FAU Erlangen-Nürnberg", styles["Normal"]))
-    story.append(Spacer(1, 0.5*cm))
-    story.append(Paragraph(
-        "This report presents the results of ISIC Rev. 5 classification applied to "
-        "qualitative research projects acquired from two repositories (Dryad and FSD). "
-        "Classification used sentence-transformer embeddings (all-MiniLM-L6-v2) on "
-        "project metadata (Tier 1) and extracted file content (Tier 2). "
-        "Validation is descriptive only.", body_style))
+    # ── Cover page ─────────────────────────────────────────────────────────
+    accent = Table([[""]],
+                   colWidths=[17*cm], rowHeights=[0.6*cm])
+    accent.setStyle(TableStyle([
+        ("BACKGROUND", (0,0), (-1,-1), colors.HexColor("#2E4057")),
+    ]))
+    story.append(Spacer(1, 2*cm))
+    story.append(accent)
+    story.append(Spacer(1, 2.5*cm))
+
+    cover_title = ParagraphStyle(
+        "CoverTitle",
+        fontName="Helvetica-Bold",
+        fontSize=26,
+        textColor=colors.HexColor("#2E4057"),
+        spaceAfter=4,
+        alignment=TA_CENTER,
+    )
+    cover_sub = ParagraphStyle(
+        "CoverSub",
+        fontName="Helvetica",
+        fontSize=14,
+        textColor=colors.HexColor("#048A81"),
+        spaceAfter=6,
+        spaceBefore=14,
+        alignment=TA_CENTER,
+    )
+
+    story.append(Paragraph("QDArchive", cover_title))
+    story.append(Paragraph("Part 2 – Classification Report", cover_sub))
+    story.append(Spacer(1, 1.5*cm))
+
+    info_data = [
+        ["Student", "Farjana Islam Shashi"],
+        ["Student ID", "23148157"],
+        ["Institution", "FAU Erlangen-Nürnberg"],
+        ["Supervisor", "Prof. Dr. Dirk Riehle"],
+        ["Repositories", "Dryad · FSD Finnish Social Science Data Archive"],
+        ["Classifier", "ISIC Rev. 5 · sentence-transformers (all-MiniLM-L6-v2)"],
+        ["Date", "July 2026"],
+    ]
+    info_table = Table(info_data, colWidths=[5*cm, 11*cm])
+    info_table.setStyle(TableStyle([
+        ("FONTNAME",  (0,0), (0,-1), "Helvetica-Bold"),
+        ("FONTNAME",  (1,0), (1,-1), "Helvetica"),
+        ("FONTSIZE",  (0,0), (-1,-1), 10),
+        ("TEXTCOLOR", (0,0), (0,-1), colors.HexColor("#2E4057")),
+        ("TEXTCOLOR", (1,0), (1,-1), colors.HexColor("#333333")),
+        ("ROWBACKGROUNDS", (0,0), (-1,-1),
+         [colors.HexColor("#F0F4F8"), colors.white]),
+        ("TOPPADDING",    (0,0), (-1,-1), 7),
+        ("BOTTOMPADDING", (0,0), (-1,-1), 7),
+        ("LEFTPADDING",   (0,0), (-1,-1), 10),
+        ("GRID", (0,0), (-1,-1), 0.4, colors.HexColor("#DDDDDD")),
+        ("VALIGN", (0,0), (-1,-1), "MIDDLE"),
+    ]))
+    story.append(info_table)
+    story.append(Spacer(1, 2.5*cm))
+    story.append(accent)
     story.append(PageBreak())
 
     # Overall summary
@@ -507,6 +555,154 @@ def make_pdf(conn):
                 )
             story.append(Paragraph(comment, body_style))
             story.append(Spacer(1, 0.5*cm))
+
+        # ── Extra FSD section ─────────────────────────────────────────────
+        if repo_id == 11:
+            story.append(Paragraph("Repository Overview", h2_style))
+            story.append(Paragraph(
+                "The Finnish Social Science Data Archive (FSD), hosted by Tampere University, "
+                "is one of Europe's oldest and most comprehensive social science data repositories. "
+                "It specialises in archiving, describing, and distributing digital research data "
+                "for the Finnish and international research community. FSD covers a wide range of "
+                "social science disciplines including sociology, political science, psychology, "
+                "economics, and education research.", body_style))
+            story.append(Spacer(1, 0.2*cm))
+            story.append(Paragraph(
+                "Data is made available under varying access conditions. Class A datasets carry "
+                "CC BY 4.0 licences and are freely downloadable. Class B and C datasets require "
+                "institutional registration. For this project, metadata for all 2186 projects was "
+                "harvested via the OAI-PMH protocol endpoint "
+                "(https://services.fsd.tuni.fi/v0/oai), providing rich Dublin Core metadata "
+                "including titles, descriptions, keywords, and temporal coverage.", body_style))
+            story.append(Spacer(1, 0.3*cm))
+
+            story.append(Paragraph("Acquisition Results", h2_style))
+
+            # Stats table
+            fsd_stats = [
+                ["Metric", "Value"],
+                ["Total projects harvested via OAI-PMH", "2,186"],
+                ["Projects with downloaded files (Class A)", "129"],
+                ["Projects inaccessible (login required)", "~2,057"],
+                ["QDA_PROJECT identified", "0"],
+                ["QD_PROJECT identified", "0"],
+                ["OTHER_PROJECT identified", "129"],
+                ["NOT_A_PROJECT", "2,057"],
+                ["Dominant file types downloaded", "ZIP archives containing structured data"],
+            ]
+            fsd_table = Table(fsd_stats, colWidths=[10*cm, 6*cm])
+            fsd_table.setStyle(TableStyle([
+                ("BACKGROUND",  (0,0), (-1,0), colors.HexColor("#2E4057")),
+                ("TEXTCOLOR",   (0,0), (-1,0), colors.white),
+                ("FONTNAME",    (0,0), (-1,0), "Helvetica-Bold"),
+                ("FONTNAME",    (0,1), (0,-1), "Helvetica-Bold"),
+                ("FONTSIZE",    (0,0), (-1,-1), 9),
+                ("TEXTCOLOR",   (0,1), (0,-1), colors.HexColor("#2E4057")),
+                ("ROWBACKGROUNDS", (0,1), (-1,-1),
+                 [colors.white, colors.HexColor("#F0F4F8")]),
+                ("GRID",        (0,0), (-1,-1), 0.4, colors.HexColor("#CCCCCC")),
+                ("TOPPADDING",  (0,0), (-1,-1), 6),
+                ("BOTTOMPADDING",(0,0),(-1,-1), 6),
+                ("LEFTPADDING", (0,0), (-1,-1), 8),
+                ("VALIGN",      (0,0), (-1,-1), "MIDDLE"),
+            ]))
+            story.append(fsd_table)
+            story.append(Spacer(1, 0.4*cm))
+
+            # Project type pie chart
+            story.append(Paragraph("Project Type Distribution", h2_style))
+            fig, ax = plt.subplots(figsize=(7, 4))
+            pie_labels = ["NOT_A_PROJECT\n(2,057)", "OTHER_PROJECT\n(129)"]
+            pie_sizes  = [2057, 129]
+            pie_colors = ["#C0D4E8", "#2E4057"]
+            wedges, texts, autotexts = ax.pie(
+                pie_sizes, labels=pie_labels, colors=pie_colors,
+                autopct="%1.1f%%", startangle=140,
+                textprops={"fontsize": 10},
+                wedgeprops={"edgecolor": "white", "linewidth": 2}
+            )
+            for at in autotexts:
+                at.set_fontsize(9)
+                at.set_color("white")
+                at.set_fontweight("bold")
+            ax.set_title("FSD — Project Type Breakdown (2,186 total)",
+                         fontsize=11, fontweight="bold", pad=15)
+            ax.axis("equal")
+            plt.tight_layout()
+            pie_buf = io.BytesIO()
+            fig.savefig(pie_buf, format="png", bbox_inches="tight", dpi=150)
+            plt.close(fig)
+            pie_buf.seek(0)
+            story.append(RLImage(pie_buf, width=12*cm, height=7*cm))
+            story.append(Paragraph(
+                "Figure: Distribution of project types across all 2,186 FSD projects. "
+                "The dominance of NOT_A_PROJECT reflects the login barrier preventing "
+                "file-based classification for most records.",
+                caption_style))
+            story.append(Spacer(1, 0.4*cm))
+
+            story.append(Paragraph("Classification Approach for FSD", h2_style))
+            story.append(Paragraph(
+                "FSD presented a significant technical challenge for content-based classification. "
+                "The vast majority of FSD datasets (Class B and C) require institutional Shibboleth "
+                "SSO authentication before files can be downloaded. As a result, Tier 2 content "
+                "extraction (reading actual file text) was only possible for the 129 Class A "
+                "projects that were successfully downloaded.", body_style))
+            story.append(Spacer(1, 0.15*cm))
+            story.append(Paragraph(
+                "For the 2,057 projects where no files were available, classification relied "
+                "entirely on Tier 1 metadata — titles, descriptions, and keywords harvested "
+                "via OAI-PMH. FSD metadata is available in both Finnish and English, which "
+                "benefited the embedding-based classifier since the all-MiniLM-L6-v2 model "
+                "has multilingual capability for common European languages.", body_style))
+            story.append(Spacer(1, 0.15*cm))
+            story.append(Paragraph(
+                "Since none of the FSD projects were classified as QD_PROJECT or QDA_PROJECT "
+                "(no qualifying primary data file extensions were found among the downloaded "
+                "ZIP archives), ISIC classification at the division level was not applied to "
+                "FSD projects. The downloaded FSD packages primarily contained structured "
+                "tabular data (SPSS .sav files, CSV, and XML codebooks) rather than "
+                "qualitative data files such as interview transcripts or text documents.", body_style))
+            story.append(Spacer(1, 0.3*cm))
+
+            story.append(Paragraph("Key Observations", h2_style))
+            observations = [
+                ("Scale of metadata coverage",
+                 "2,186 project records were successfully harvested — making FSD the largest "
+                 "single source in this archive by project count. This represents a comprehensive "
+                 "snapshot of Finnish social science research data spanning several decades."),
+                ("Qualitative data accessibility",
+                 "While FSD hosts social science research that frequently involves qualitative "
+                 "methods (interviews, surveys, focus groups), the actual qualitative source "
+                 "files are predominantly restricted access. Only codebooks and aggregated "
+                 "data files were available under open licences."),
+                ("File format patterns",
+                 "Downloaded FSD packages (Class A) typically contained SPSS .sav files, "
+                 "XML codebooks, and README documentation. These are structured/quantitative "
+                 "formats rather than raw qualitative data, explaining the absence of "
+                 "QD_PROJECT classifications."),
+                ("Potential for future classification",
+                 "With institutional access, FSD's rich metadata (including subject "
+                 "classifications aligned to DDI standards) could be mapped to ISIC divisions "
+                 "with high confidence. The OAI-PMH harvest already provides sufficient "
+                 "title and keyword data for Tier 1 classification of all 2,186 records."),
+            ]
+            for obs_title, obs_text in observations:
+                obs_row = Table(
+                    [[Paragraph(f"<b>{obs_title}</b>", body_style),
+                      Paragraph(obs_text, body_style)]],
+                    colWidths=[4.5*cm, 11.5*cm]
+                )
+                obs_row.setStyle(TableStyle([
+                    ("VALIGN",      (0,0), (-1,-1), "TOP"),
+                    ("LEFTPADDING", (0,0), (-1,-1), 6),
+                    ("TOPPADDING",  (0,0), (-1,-1), 5),
+                    ("BOTTOMPADDING",(0,0),(-1,-1), 5),
+                    ("LINEBELOW",   (0,0), (-1,-1), 0.3, colors.HexColor("#DDDDDD")),
+                    ("BACKGROUND",  (0,0), (0,-1), colors.HexColor("#F0F4F8")),
+                ]))
+                story.append(obs_row)
+            story.append(Spacer(1, 0.3*cm))
 
         story.append(PageBreak())
 
