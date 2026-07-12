@@ -367,9 +367,21 @@ def make_pdf(conn):
                                    fontSize=9.5, spaceAfter=3, leading=14,
                                    leftIndent=15)
 
+    def add_page_number(canvas, doc):
+        if doc.page > 1:  # skip cover page
+            canvas.saveState()
+            canvas.setFont("Helvetica", 8)
+            canvas.setFillColor(colors.HexColor("#888888"))
+            page_num = f"Page {doc.page}"
+            canvas.drawRightString(19*cm, 1.2*cm, page_num)
+            canvas.drawString(2*cm, 1.2*cm, "QDArchive – Part 2 Classification Report | Farjana Islam Shashi | 23148157")
+            canvas.setStrokeColor(colors.HexColor("#DDDDDD"))
+            canvas.line(2*cm, 1.4*cm, 19*cm, 1.4*cm)
+            canvas.restoreState()
+
     doc = SimpleDocTemplate(PDF_OUT, pagesize=A4,
                             rightMargin=2*cm, leftMargin=2*cm,
-                            topMargin=2*cm, bottomMargin=2*cm)
+                            topMargin=2*cm, bottomMargin=2.5*cm)
     story = []
 
     # ── Helper: dark accent bar ────────────────────────────────────────────
@@ -384,7 +396,7 @@ def make_pdf(conn):
         return t
 
     # ══════════════════════════════════════════════════════════════════════
-    # PAGE 1 — COVER
+    # PAGE 1. COVER
     # ══════════════════════════════════════════════════════════════════════
     story.append(Spacer(1, 2*cm))
     story.append(accent_bar())
@@ -430,7 +442,7 @@ def make_pdf(conn):
     story.append(PageBreak())
 
     # ══════════════════════════════════════════════════════════════════════
-    # PAGE 2 — TABLE OF CONTENTS
+    # PAGE 2. TABLE OF CONTENTS
     # ══════════════════════════════════════════════════════════════════════
     story.append(Paragraph("Table of Contents", h1_style))
     story.append(teal_bar())
@@ -470,7 +482,7 @@ def make_pdf(conn):
     story.append(PageBreak())
 
     # ══════════════════════════════════════════════════════════════════════
-    # PAGE 3 — EXECUTIVE SUMMARY
+    # PAGE 3. EXECUTIVE SUMMARY
     # ══════════════════════════════════════════════════════════════════════
     story.append(Paragraph("1. Executive Summary", h1_style))
     story.append(teal_bar())
@@ -522,7 +534,7 @@ def make_pdf(conn):
     story.append(st)
     story.append(Spacer(1, 0.4*cm))
     story.append(Paragraph(
-        "The absence of QDA_PROJECT classifications across both repositories is notable — "
+        "The absence of QDA_PROJECT classifications across both repositories is notable. "
         "neither Dryad nor FSD contained files in recognised QDA tool formats such as "
         ".qdpx (REFI-QDA), .nvp (NVivo), or .atlproj (ATLAS.ti). This confirms that "
         "general-purpose scientific repositories rarely host QDA software project files directly, "
@@ -531,7 +543,7 @@ def make_pdf(conn):
     story.append(PageBreak())
 
     # ══════════════════════════════════════════════════════════════════════
-    # PAGE 4 — METHODOLOGY
+    # PAGE 4. METHODOLOGY
     # ══════════════════════════════════════════════════════════════════════
     story.append(Paragraph("2. Methodology", h1_style))
     story.append(teal_bar())
@@ -576,10 +588,10 @@ def make_pdf(conn):
     story.append(Paragraph(
         "The classifier operates in two tiers of input data:", body_style))
     story.append(Paragraph(
-        "• <b>Tier 1 — Metadata:</b> Project title, description, abstract, and keywords "
+        "• <b>Tier 1. Metadata:</b> Project title, description, abstract, and keywords "
         "harvested from the repository API or OAI-PMH endpoint. Always available.", bullet_style))
     story.append(Paragraph(
-        "• <b>Tier 2 — File content:</b> Text extracted from downloaded files in parseable "
+        "• <b>Tier 2. File content:</b> Text extracted from downloaded files in parseable "
         "formats: .txt, .rtf, .docx, .pdf, .csv, .xlsx, .json, .xml. For .qdpx files "
         "(ZIP archives), the archive is unpacked and nested primary files are extracted.", bullet_style))
     story.append(Spacer(1, 0.15*cm))
@@ -588,7 +600,7 @@ def make_pdf(conn):
         "model and compared against pre-encoded embeddings of all 88 ISIC division "
         "descriptions using cosine similarity. The division with the highest similarity "
         "score is assigned as the primary class. This approach is fully deterministic "
-        "and reproducible — running the classifier twice on the same input always "
+        "and reproducible. running the classifier twice on the same input always "
         "produces the same result.", body_style))
     story.append(Spacer(1, 0.15*cm))
     story.append(Paragraph(
@@ -608,7 +620,7 @@ def make_pdf(conn):
     story.append(PageBreak())
 
     # ══════════════════════════════════════════════════════════════════════
-    # PAGE 5–9 — DRYAD
+    # PAGE 5–9. DRYAD
     # ══════════════════════════════════════════════════════════════════════
     story.append(Paragraph("3. Repository 1: Dryad", h1_style))
     story.append(teal_bar())
@@ -627,7 +639,7 @@ def make_pdf(conn):
         "Dryad assigns each dataset a DOI and requires that data be released under "
         "a CC0 (public domain) licence, making all content freely usable without "
         "restriction. The repository is particularly strong in ecology, marine biology, "
-        "genetics, and conservation science — disciplines where open data sharing "
+        "genetics, and conservation science. disciplines where open data sharing "
         "has become standard practice.", body_style))
     story.append(Spacer(1,0.15*cm))
     story.append(Paragraph(
@@ -644,9 +656,9 @@ def make_pdf(conn):
         ["Files successfully downloaded (SUCCEEDED)", "333"],
         ["Files too large to download (FAILED_TOO_LARGE)", "50"],
         ["File size limit applied", "200 MB per file"],
-        ["Licence type", "CC0 (public domain) — all projects"],
+        ["Licence type", "CC0 (public domain). all projects"],
         ["API method", "Dryad REST API with OAuth2 authentication"],
-        ["Rate limiting encountered", "Yes — HTTP 429, required deliberate wait intervals"],
+        ["Rate limiting encountered", "Yes. HTTP 429, required deliberate wait intervals"],
         ["Local storage used", "~28 GB"],
     ]
     dt = Table(dryad_acq, colWidths=[9*cm, 7*cm])
@@ -683,7 +695,7 @@ def make_pdf(conn):
             ax.text(bar.get_x()+bar.get_width()/2, bar.get_height()+1,
                     str(val), ha="center", va="bottom", fontweight="bold", fontsize=11)
     ax.set_ylabel("Number of Projects", fontsize=10)
-    ax.set_title("Dryad — Project Type Distribution (142 total)", fontsize=11, fontweight="bold")
+    ax.set_title("Dryad. Project Type Distribution (142 total)", fontsize=11, fontweight="bold")
     ax.spines["top"].set_visible(False)
     ax.spines["right"].set_visible(False)
     ax.set_ylim(0, 85)
@@ -700,7 +712,7 @@ def make_pdf(conn):
     story.append(Spacer(1,0.3*cm))
     story.append(Paragraph(
         "The <b>70 QD_PROJECT</b> entries contain primary data files such as PDFs, "
-        "CSV tables, images, and text documents — the direct inputs to researcher analysis. "
+        "CSV tables, images, and text documents. the direct inputs to researcher analysis. "
         "The <b>66 OTHER_PROJECT</b> entries contain structured data files such as CSV "
         "and README markdown files that are useful data products but do not constitute "
         "qualitative primary data in the strict sense. The <b>6 NOT_A_PROJECT</b> entries "
@@ -798,7 +810,7 @@ def make_pdf(conn):
     story.append(st2)
     story.append(Spacer(1,0.3*cm))
     story.append(Paragraph(
-        "The sample illustrates the breadth of Dryad's content — from marine ecology "
+        "The sample illustrates the breadth of Dryad's content. from marine ecology "
         "and virology to cancer treatment outcomes and seismology. While most projects "
         "are classified under Section A (Agriculture, Forestry and Fishing), this "
         "reflects the classifier's strong association of biological field data "
@@ -818,7 +830,7 @@ def make_pdf(conn):
         "This concentration is not surprising given Dryad's role as a primary "
         "data repository for ecological and biological sciences. The majority of "
         "Dryad datasets consist of field observation data, species measurements, "
-        "community composition tables, and environmental monitoring results — all "
+        "community composition tables, and environmental monitoring results. all "
         "of which closely match the ISIC descriptions for fishing, aquaculture, "
         "forestry, and crop/animal production activities.", body_style))
     story.append(Spacer(1,0.15*cm))
@@ -835,8 +847,8 @@ def make_pdf(conn):
         "<b>Classifier behaviour:</b> The embedding-based classifier performed well "
         "for projects with rich metadata and clear domain signals. For projects where "
         "only CSV column headers and README files were available, classification "
-        "relied heavily on terminology matching. In some cases — for example, a "
-        "seismology dataset being classified as H/49 (Land transport) — the classifier "
+        "relied heavily on terminology matching. In some cases. for example, a "
+        "seismology dataset being classified as H/49 (Land transport). the classifier "
         "found surface-level lexical similarities rather than true domain matches. "
         "This is an expected limitation of zero-shot embedding classification and "
         "would be addressed in future iterations by incorporating domain-specific "
@@ -846,14 +858,14 @@ def make_pdf(conn):
         "<b>QDA file absence:</b> No QDA-format project files were found in Dryad. "
         "This is consistent with Dryad's positioning as a raw data repository rather "
         "than an analysis tool archive. Researchers deposit the data underlying their "
-        "publications — not the analytical software projects used to interpret it. "
+        "publications. not the analytical software projects used to interpret it. "
         "For QDArchive to acquire QDA files from Dryad-style repositories, "
         "targeted outreach to specific research groups or journal data policies "
         "requiring QDA file deposit would be necessary.", body_style))
     story.append(PageBreak())
 
     # ══════════════════════════════════════════════════════════════════════
-    # PAGES 10–13 — FSD
+    # PAGES 10–13. FSD
     # ══════════════════════════════════════════════════════════════════════
     story.append(Paragraph("4. Repository 2: FSD Finnish Social Science Data Archive", h1_style))
     story.append(teal_bar())
@@ -934,7 +946,7 @@ def make_pdf(conn):
 
     # FSD pie chart
     fig, ax = plt.subplots(figsize=(7, 4.5))
-    pie_labels = ["NOT_A_PROJECT\n(2,057 — 94.1%)", "OTHER_PROJECT\n(129 — 5.9%)"]
+    pie_labels = ["NOT_A_PROJECT\n(2,057. 94.1%)", "OTHER_PROJECT\n(129. 5.9%)"]
     pie_sizes  = [2057, 129]
     pie_colors = ["#C0D4E8", "#2E4057"]
     wedges, texts, autotexts = ax.pie(
@@ -947,7 +959,7 @@ def make_pdf(conn):
         at.set_fontsize(9)
         at.set_color("white")
         at.set_fontweight("bold")
-    ax.set_title("FSD — Project Type Breakdown (2,186 total)",
+    ax.set_title("FSD. Project Type Breakdown (2,186 total)",
                  fontsize=11, fontweight="bold", pad=15)
     ax.axis("equal")
     plt.tight_layout()
@@ -965,7 +977,7 @@ def make_pdf(conn):
     story.append(Paragraph(
         "The 129 <b>OTHER_PROJECT</b> entries correspond to Class A datasets where "
         "files were successfully downloaded. These packages typically contained "
-        "SPSS .sav data files, XML codebooks, CSV exports, and README documentation — "
+        "SPSS .sav data files, XML codebooks, CSV exports, and README documentation. "
         "structured quantitative formats rather than qualitative primary data files "
         "such as interview transcripts or audio recordings. This explains why none "
         "of the downloaded FSD projects were classified as QD_PROJECT.", body_style))
@@ -977,7 +989,7 @@ def make_pdf(conn):
         "a two-track classification strategy was applied:", body_style))
     story.append(Spacer(1,0.15*cm))
     story.append(Paragraph(
-        "<b>Track 1 — Downloaded projects (129 Class A datasets):</b> "
+        "<b>Track 1. Downloaded projects (129 Class A datasets):</b> "
         "Both Tier 1 metadata and Tier 2 file content were available. "
         "However, since all 129 projects were classified as OTHER_PROJECT "
         "(no qualifying primary data file extensions found), ISIC classification "
@@ -985,7 +997,7 @@ def make_pdf(conn):
         "which limits ISIC classification to QDA_PROJECT and QD_PROJECT types.", body_style))
     story.append(Spacer(1,0.15*cm))
     story.append(Paragraph(
-        "<b>Track 2 — Restricted projects (2,057 Class B/C datasets):</b> "
+        "<b>Track 2. Restricted projects (2,057 Class B/C datasets):</b> "
         "Only Tier 1 metadata was available. These projects were classified as "
         "NOT_A_PROJECT since no file extensions could be evaluated. "
         "While their rich OAI-PMH metadata (Finnish and English titles, "
@@ -998,13 +1010,15 @@ def make_pdf(conn):
     story.append(Paragraph(
         "Downloading Class A FSD datasets required a non-trivial 3-step authentication "
         "flow that was reverse-engineered from the FSD website:", body_style))
+    _fs = ParagraphStyle("FT", fontSize=8.5, leading=12)
+    _fh = ParagraphStyle("FTH", fontSize=8.5, leading=12, fontName="Helvetica-Bold", textColor=colors.white)
     flow_data = [
-        ["Step", "Action", "Technical Detail"],
-        ["1", "Visit terms page", "GET request to dataset terms URL — establishes session cookie in the browser session"],
-        ["2", "Request download", "POST to /catalogue/download — server returns HTTP meta-refresh redirect containing a DIP (Data In Package) URL"],
-        ["3", "Follow DIP URL", "GET request to the DIP URL — downloads the actual ZIP archive containing the dataset files"],
+        [Paragraph("Step",_fh), Paragraph("Action",_fh), Paragraph("Technical Detail",_fh)],
+        [Paragraph("1",_fs), Paragraph("Visit terms page",_fs), Paragraph("GET request to dataset terms URL. Establishes session cookie in the browser session.",_fs)],
+        [Paragraph("2",_fs), Paragraph("Request download",_fs), Paragraph("POST to /catalogue/download. Server returns HTTP meta-refresh redirect containing a DIP (Data In Package) URL.",_fs)],
+        [Paragraph("3",_fs), Paragraph("Follow DIP URL",_fs), Paragraph("GET request to the DIP URL. Downloads the actual ZIP archive containing the dataset files.",_fs)],
     ]
-    flow_t = Table(flow_data, colWidths=[1.2*cm, 4*cm, 10.8*cm])
+    flow_t = Table(flow_data, colWidths=[1.2*cm, 3.2*cm, 12.6*cm])
     flow_t.setStyle(TableStyle([
         ("BACKGROUND",(0,0),(-1,0),colors.HexColor("#048A81")),
         ("TEXTCOLOR",(0,0),(-1,0),colors.white),
@@ -1013,9 +1027,10 @@ def make_pdf(conn):
         ("ROWBACKGROUNDS",(0,1),(-1,-1),[colors.white,colors.HexColor("#F0F4F8")]),
         ("GRID",(0,0),(-1,-1),0.4,colors.HexColor("#CCCCCC")),
         ("VALIGN",(0,0),(-1,-1),"TOP"),
-        ("TOPPADDING",(0,0),(-1,-1),5), ("BOTTOMPADDING",(0,0),(-1,-1),5),
+        ("TOPPADDING",(0,0),(-1,-1),6), ("BOTTOMPADDING",(0,0),(-1,-1),6),
         ("LEFTPADDING",(0,0),(-1,-1),6),
         ("ALIGN",(0,0),(0,-1),"CENTER"),
+        ("WORDWRAP",(0,0),(-1,-1),True),
     ]))
     story.append(flow_t)
     story.append(PageBreak())
@@ -1030,7 +1045,7 @@ def make_pdf(conn):
         ("Qualitative data potential",
          "FSD explicitly archives qualitative interview data alongside quantitative surveys. "
          "Many restricted datasets contain interview transcripts, focus group recordings, "
-         "and open-ended survey responses — exactly the qualitative primary data that "
+         "and open-ended survey responses. exactly the qualitative primary data that "
          "QDArchive targets. Institutional access would unlock this content for future "
          "seeding efforts."),
         ("File format patterns",
@@ -1042,7 +1057,7 @@ def make_pdf(conn):
          "FSD's OAI-PMH metadata is exceptionally detailed compared to other repositories. "
          "Records include multilingual titles and abstracts (Finnish and English), "
          "DDI-aligned subject classifications, temporal coverage, geographic scope, "
-         "and data collection methodology — all of which would support high-quality "
+         "and data collection methodology. all of which would support high-quality "
          "Tier 1 ISIC classification if applied to OTHER_PROJECT types in future work."),
         ("Future classification potential",
          "With the 2,186 OAI-PMH metadata records available, it would be feasible to "
@@ -1069,7 +1084,7 @@ def make_pdf(conn):
     story.append(PageBreak())
 
     # ══════════════════════════════════════════════════════════════════════
-    # PAGE 14 — CROSS-REPOSITORY COMPARISON
+    # PAGE 14. CROSS-REPOSITORY COMPARISON
     # ══════════════════════════════════════════════════════════════════════
     story.append(Paragraph("5. Cross-Repository Comparison", h1_style))
     story.append(teal_bar())
@@ -1118,12 +1133,12 @@ def make_pdf(conn):
     story.append(Paragraph(
         "From a QDArchive perspective, Dryad offers immediate value as a source of open "
         "qualitative data files (particularly for ecology and biology), while FSD represents "
-        "a high-value target for future institutional partnership — its restricted qualitative "
+        "a high-value target for future institutional partnership. its restricted qualitative "
         "interview data collections are precisely the kind of content QDArchive aims to archive.", body_style))
     story.append(PageBreak())
 
     # ══════════════════════════════════════════════════════════════════════
-    # PAGE 15 — TECHNICAL CHALLENGES
+    # PAGE 15. TECHNICAL CHALLENGES
     # ══════════════════════════════════════════════════════════════════════
     story.append(Paragraph("6. Technical Challenges", h1_style))
     story.append(teal_bar())
@@ -1150,10 +1165,10 @@ def make_pdf(conn):
          ".nvp, .atlproj, .mx24, etc.). All 2,328 processed projects resulted in 0 "
          "QDA_PROJECT classifications. This finding suggests that general-purpose "
          "scientific data repositories are not currently used by researchers to deposit "
-         "their QDA software project files — only the underlying data files. "
+         "their QDA software project files. only the underlying data files. "
          "Targeted outreach or partnerships with QDA software vendors may be required."),
         ("Metadata sparsity in Dryad",
-         "Many Dryad projects have minimal textual metadata — often only a short title "
+         "Many Dryad projects have minimal textual metadata. often only a short title "
          "and a brief abstract. This shifted classification weight to Tier 2 file content, "
          "meaning CSV column headers and README files became the primary classification "
          "signals. When these files contained technical variable names rather than "
@@ -1182,7 +1197,7 @@ def make_pdf(conn):
     story.append(PageBreak())
 
     # ══════════════════════════════════════════════════════════════════════
-    # PAGE 16 — CONCLUSION
+    # PAGE 16. CONCLUSION
     # ══════════════════════════════════════════════════════════════════════
     story.append(Paragraph("7. Conclusion", h1_style))
     story.append(teal_bar())
@@ -1196,7 +1211,7 @@ def make_pdf(conn):
         "The key findings are:", body_style))
     story.append(Paragraph(
         "• <b>No QDA project files were found</b> in either repository. This is the "
-        "most significant finding for the QDArchive project — general scientific "
+        "most significant finding for the QDArchive project. general scientific "
         "repositories do not currently serve as deposit locations for QDA tool files.", bullet_style))
     story.append(Paragraph(
         "• <b>Dryad</b> provided 70 classifiable QD_PROJECT entries, predominantly "
@@ -1225,7 +1240,7 @@ def make_pdf(conn):
         "https://github.com/FarjanaShashi/shashi_qdarchive under the "
         "classification-results tag.", body_style))
 
-    doc.build(story)
+    doc.build(story, onFirstPage=add_page_number, onLaterPages=add_page_number)
     print(f"PDF saved: {PDF_OUT}")
 
 
